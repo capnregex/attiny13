@@ -25,9 +25,10 @@
 int main(void)
 {
     int i;
-    for(i = 0; i < 5; i++) {
-      DDRB |= (1 << i);		/* Set PORTB bit 4 to output. */
-    }
+    DDRB |= 0b00011111;
+//    for(i = 0; i < 5; i++) {
+//      DDRB |= (1 << i);		/* Set PORTB bit 4 to output. */
+//    }
 
     while (1) {
         for(i = 0; i < 5; i++) {

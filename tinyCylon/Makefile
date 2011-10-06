@@ -18,7 +18,7 @@
 ## Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 ##
 
-PROGRAM = tinyCylon_2_1
+PROGRAM = tinyCylon
 MCU = attiny13
 CC = avr-gcc
 OBJCOPY = avr-objcopy

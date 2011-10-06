@@ -1,0 +1,49 @@
+-------------------------------------------------------------------------------
+README
+-------------------------------------------------------------------------------
+
+This is a small blink demo program for the Atmel ATtiny13 microcontroller.
+It periodically lights up an LED connected to pin 4 of the ATtiny13.
+
+Requirements
+------------
+
+ * Software:
+   * gcc-avr
+   * avr-libc
+   * avrdude (or any other AVR programming software)
+
+ * Hardware:
+   * Atmel ATtiny13 microcontroller
+   * A breadboard (optional, you could also solder all the stuff, of course)
+   * Some wires for the breadboard
+   * A LED
+   * A small (e.g. 4K7) resistor for the LED (optional, but recommended)
+   * AVR programmer device (e.g. USBprog with the avrispmk2 firmware) that
+     can power the ATtiny13 (or a 3V battery instead).
+
+Building
+--------
+
+ $ make
+
+Flashing
+--------
+
+ $ make flash
+
+Datasheets
+----------
+
+ * ATtiny13:
+   * Summary: http://atmel.com/dyn/resources/prod_documents/2535S.pdf
+   * Datasheet: http://atmel.com/dyn/resources/prod_documents/doc2535.pdf
+
+ * ATtiny13A:
+   * Summary: http://atmel.com/dyn/resources/prod_documents/8126S.pdf
+   * Datasheet: http://atmel.com/dyn/resources/prod_documents/doc8126.pdf
+
+ * USBProg:
+   * Website: http://www.embedded-projects.net/index.php?page_id=135
+   * AVRISP mkII code: http://www.embedded-projects.net/index.php?page_id=148
+

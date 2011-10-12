@@ -22,7 +22,8 @@ PROGRAM = tinyCylon
 MCU = attiny13
 CC = avr-gcc
 OBJCOPY = avr-objcopy
-CFLAGS += -Wall -g -Os -mmcu=$(MCU)
+F_CPU = 128000UL # khz
+CFLAGS += -Wall -g -Os -DF_CPU=$(F_CPU) -mmcu=$(MCU)
 LDFLAGS +=
 OBJS = $(PROGRAM).o
 
@@ -31,7 +32,7 @@ ifneq ($(V),1)
 Q := @
 endif
 
-all: $(PROGRAM).hex
+all: $(PROGRAM).hex eeprom.hex
 
 $(PROGRAM).elf: $(PROGRAM).o
 	@printf "  LD      $(subst $(shell pwd)/,,$(@))\n"
@@ -39,15 +40,27 @@ $(PROGRAM).elf: $(PROGRAM).o
 
 $(PROGRAM).hex: $(PROGRAM).elf
 	@printf "  OBJCOPY $(subst $(shell pwd)/,,$(@))\n"
-	$(Q)$(OBJCOPY) -O ihex $< $@
+	$(Q)$(OBJCOPY) -gO ihex -R .eeprom $< $@
+
+eeprom.hex: $(PROGRAM).elf
+	@printf "  OBJCOPY $(subst $(shell pwd)/,,$(@))\n"
+	$(Q)$(OBJCOPY) -gO ihex -j .eeprom $< $@
 
 %.o: %.c
 	@printf "  CC      $(subst $(shell pwd)/,,$(@))\n"
 	$(Q)$(CC) $(CFLAGS) -o $@ -c $<
 
-flash: $(PROGRAM).hex
+flash: $(PROGRAM).hex eeprom.hex
 	@printf "  FLASH   $(PROGRAM).hex\n"
-	$(Q)avrdude -c usbtiny -p t13 -U flash:w:$(PROGRAM).hex
+	$(Q)avrdude -c usbtiny -p t13 -i 80 -U flash:w:$(PROGRAM).hex
+	$(Q)avrdude -c usbtiny -p t13 -i 80 -U eeprom:w:eeprom.hex
+
+fuse: 
+	$(Q)avrdude -c usbtiny -p t13 -U lfuse:w:0x7b:m -U hfuse:w:0xfd:m
+#	$(Q)avrdude -c usbtiny -p t13 -U lfuse:w:0x6b:m -U hfuse:w:0xfd:m
+
+fusereset: 
+	$(Q)avrdude -c usbtiny -p t13 -i 80 -U lfuse:w:0x6a:m -U hfuse:w:0xf9:m
 
 clean:
 	@printf "  CLEAN   $(subst $(shell pwd)/,,$(OBJS))\n"

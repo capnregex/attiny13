@@ -167,7 +167,7 @@ unsigned int prand(void) {
 // cylon() - simulate cylon scanner
 ///////////////////////////////////////////////////////////////////////////////
 
-#define CYLON_SCAN_DELAY 30
+#define CYLON_SCAN_DELAY 5
 
 void cylon(unsigned char cylon_style) {
 

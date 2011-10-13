@@ -52,11 +52,11 @@ eeprom.hex: $(PROGRAM).elf
 
 flash: $(PROGRAM).hex eeprom.hex
 	@printf "  FLASH   $(PROGRAM).hex\n"
-	$(Q)avrdude -c usbtiny -p t13 -i 80 -U flash:w:$(PROGRAM).hex
-	$(Q)avrdude -c usbtiny -p t13 -i 80 -U eeprom:w:eeprom.hex
+	$(Q)avrdude -c usbtiny -p t13 -i 80 -B 64 -U flash:w:$(PROGRAM).hex
+	$(Q)avrdude -c usbtiny -p t13 -i 80 -B 64 -U eeprom:w:eeprom.hex
 
 fuse: 
-	$(Q)avrdude -c usbtiny -p t13 -U lfuse:w:0x7b:m -U hfuse:w:0xfd:m
+	$(Q)avrdude -c usbtiny -p t13 -B 64 -U lfuse:w:0x7b:m -U hfuse:w:0xfd:m
 #	$(Q)avrdude -c usbtiny -p t13 -U lfuse:w:0x6b:m -U hfuse:w:0xfd:m
 
 fusereset: 

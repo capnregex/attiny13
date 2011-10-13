@@ -45,7 +45,9 @@ typedef enum {
 	MODE_0b, // other direction cylon scan
 	MODE_1, // glowing pig eyes (2)
 	MODE_1a, // single glowing pig eye
-	MODE_1b, // single (random) glowing pig eye
+	MODE_1b, // three glowing pig eyes
+	MODE_1c, // four glowing pig eyes
+	MODE_1r, // single (random) glowing pig eye
 	MODE_2, // random blinking - multi
 	MODE_2a, // random blinking - single
 	MODE_2b, // random blinking - intermittant
@@ -167,21 +169,20 @@ unsigned int prand(void) {
 // cylon() - simulate cylon scanner
 ///////////////////////////////////////////////////////////////////////////////
 
-#define CYLON_SCAN_DELAY 5
+#define CYLON_SCAN_DELAY 30
 
 void cylon(unsigned char cylon_style) {
 
 	const unsigned char cylon_bits[] = {
-		0b00001110, // 1 & 5
-		0b00011110, // l
-		0b00011100, // 1 & 2
+		0b00011011, // 1
+		0b00011001, // 1 & 2
 		0b00011101, // 2
-		0b00011001, // 2 & 3
-		0b00011011, // 3
-		0b00010011, // 3 & 4
-		0b00010111, // 4
+		0b00011100, // 2 & 3
+		0b00011110, // 3
+		0b00001110, // 3 & 4
+		0b00001111, // 4 
 		0b00000111, // 4 & 5
-		0b00001111  // 5
+		0b00010111  // 5
 	};
 	unsigned char i; // array iterator
 
@@ -191,12 +192,12 @@ void cylon(unsigned char cylon_style) {
 
 			// traditional (back & forth) cylon scanner
 
-			for(i = 1; i < sizeof(cylon_bits); i++) {
+			for(i = 0; i < sizeof(cylon_bits); i++) {
 				PORTB = cylon_bits[i];
 				delay(CYLON_SCAN_DELAY);
 			}
 
-			for(i = sizeof(cylon_bits) - 2; i > 1; i--) {
+			for(i = sizeof(cylon_bits) - 1; i > 1; i--) {
 				PORTB = cylon_bits[i];
 				delay(CYLON_SCAN_DELAY);
 			}
@@ -235,9 +236,13 @@ void pig_eyes(unsigned char n) {
 	while(1) {
 	
 		if(n == 1) {
-			leds_on = 0b00011011; // one eye
+			leds_on = 0b00011110; // one eye
 		} else if(n == 2) {
-			leds_on = 0b00001110; // 2 eyes
+			leds_on = 0b00010011; // 2 eyes
+		} else if(n == 3) {
+			leds_on = 0b00010010; // 3 eyes
+		} else if(n == 4) {
+			leds_on = 0b00000001; // 4 eyes
 		} else {
 			leds_on = 0b00011111 ^ (1 << (prand() % 5)); // single (random) eye
 		}
@@ -334,7 +339,15 @@ void main(void) {
 			pig_eyes(1);
 			break;
 
-		case MODE_1b: // single (random) glowing pig eye
+		case MODE_1b: // three glowing pig eyes
+			pig_eyes(3);
+			break;
+
+		case MODE_1c: // four glowing pig eyes
+			pig_eyes(4);
+			break;
+
+		case MODE_1r: // single (random) glowing pig eye
 			pig_eyes(0);
 			break;
 

@@ -40,7 +40,10 @@
 #define cbi(port, bit) (port) &= ~(1 << (bit))
 
 typedef enum {
-  MODE_0, // cylon scanner
+  MODE_CYLON, // cylon scanner
+  MODE_CYLON_FADE, // random led
+  MODE_RAND, // random led
+  MODE_RAND_PWM, // pwm random led
   MODE_MAX // off
 } MODE;
 
@@ -78,12 +81,12 @@ void init(void) {
     sbi(EECR, EERE); // strobe EEPROM read enable signal
     mode = EEDR; // read mode memory location from EEPROM
     if(mode > MODE_MAX) {
-      mode = MODE_0; // classic cylon scanner
+      mode = MODE_CYLON; // classic cylon scanner
     }
   } else if(bit_is_set(MCUSR, EXTRF)) {
     mode++; // advance mode
     if(mode > MODE_MAX) {
-      mode = MODE_0; // reset mode
+      mode = MODE_CYLON; // reset mode
     }
     //eeprom_write_byte(&eeprom_mode, mode); // memorize
     EEDR = mode; // move mode to EEPROM data register, address register is already set up
@@ -156,28 +159,30 @@ const unsigned char leds[] = {
   0b01000, 0b10000,
 };
 
-void cylon(unsigned char cylon_style) {
+void led_on(unsigned char i) {
+  DDRB = 0;
+  PORTB = leds[i];
+  DDRB = led_mask[i >> 1];
+}
 
+#define led_off() DDRB = 0
+
+void cylon() {
   unsigned char i; // array iterator
 
   while(1) {
-    if(cylon_style == 0) {
-      // traditional (back & forth) cylon scanner
+    // traditional (back & forth) cylon scanner
+    for(i = 0; i < sizeof(leds); i++) {
+      led_on(i);
+      delay(CYLON_SCAN_DELAY);
+      led_off();
+    }
 
-      for(i = 0; i < sizeof(leds); i++) {
-	DDRB = led_mask[i >> 1];
-        PORTB = leds[i];
-        delay(CYLON_SCAN_DELAY);
-	DDRB = 0;
-      }
-
-      for(i = sizeof(leds) - 1; i > 1; i--) {
-	DDRB = led_mask[i >> 1];
-        PORTB = leds[i];
-        delay(CYLON_SCAN_DELAY);
-	DDRB = 0;
-      }
-    } 
+    for(i = sizeof(leds) - 1; i > 0; i--) {
+      led_on(i);
+      delay(CYLON_SCAN_DELAY);
+      led_off();
+    }
   }
 }
 
@@ -185,33 +190,22 @@ void cylon(unsigned char cylon_style) {
 // pig_eyes() - glowing pig eyes are scary
 ///////////////////////////////////////////////////////////////////////////////
 
-void pig_eyes(unsigned char n) {
+void pwm_fade() {
 
-  unsigned char leds_on, leds_off = 0b00011111;
+  unsigned char led;
   unsigned char pwm_counter, pwm_value;
 
   while(1) {
-  
-    if(n == 1) {
-      leds_on = 0b00011110; // one eye
-    } else if(n == 2) {
-      leds_on = 0b00010011; // 2 eyes
-    } else if(n == 3) {
-      leds_on = 0b00010010; // 3 eyes
-    } else if(n == 4) {
-      leds_on = 0b00000001; // 4 eyes
-    } else {
-      leds_on = 0b00011111 ^ (1 << (prand() % 5)); // single (random) eye
-    }
-
+    led = prand() % sizeof(leds);
+ 
     // ramp up...
 
     for(pwm_value = 1; pwm_value < 128; pwm_value++) {
       for(pwm_counter = 0; pwm_counter < 128; pwm_counter++) {
         if(pwm_value > pwm_counter) {
-          PORTB = leds_on;
+          led_on(led);
         } else {
-          PORTB = leds_off;
+	  led_off();
         }
       }
     }
@@ -221,9 +215,9 @@ void pig_eyes(unsigned char n) {
     for(pwm_value = 127; pwm_value > 0; pwm_value--) {
       for(pwm_counter = 0; pwm_counter < 128; pwm_counter++) {
         if(pwm_value > pwm_counter) {
-          PORTB = leds_on;
+          led_on(led);
         } else {
-          PORTB = leds_off;
+	  led_off();
         }
       }
     }
@@ -236,37 +230,42 @@ void pig_eyes(unsigned char n) {
 // random() - random blinking
 ///////////////////////////////////////////////////////////////////////////////
 
-void random(unsigned char n) {
-
+void random() {
   while(1) {
-
-    if(n == 0) {
-
-      // light up a random number of LEDs
-      PORTB = prand() & 0x1F;
-
-    } else if(n == 1) {
-
-      // light up a single LED every time
-      PORTB = 0b00011111 ^ (1 << (prand() % 5));
-
-    } else {
-
-      if((prand() & n) == n) {
-  
-        // light up an LED (maybe)
-        PORTB = 0b00011111 ^ (1 << (prand() % 5));
-
-      } else {
-
-        // no LEDs on (maybe not)
-        PORTB = 0b00011111;
-      }
-    }
-
+    led_on(prand() % sizeof(leds));
     delay(50);
   }
 }
+
+void led_fade(unsigned char a, unsigned char b, unsigned char c ) {
+  unsigned char i;
+  for(i = 0; i < 250; i++) {
+    led_on(a);
+    led_on(b);
+    led_on(c);
+    led_on(a);
+    led_on(b);
+    led_on(a);
+  }
+}
+
+void cylon_fade () {
+  unsigned char a = 0, b = 0, c = 0;
+  while(1) {
+    for(a = 0; a < sizeof(leds); a++) {
+      led_fade(a, b, c);
+      c = b;
+      b = a;
+    }
+    for(a = sizeof(leds) - 1; a > 0; a--) {
+      led_fade(a, b, c);
+      c = b;
+      b = a;
+    }
+  }
+
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // main() - main program function
@@ -276,9 +275,18 @@ void main(void) {
 
   switch(mode) {
 
-    case MODE_0: // traditional (back & forth) cylon scanner
-      cylon(0);
+    case MODE_CYLON: // traditional (back & forth) cylon scanner
+      cylon();
       break;
+
+    case MODE_CYLON_FADE: // random led
+      cylon_fade();
+
+    case MODE_RAND: // random led
+      random();
+
+    case MODE_RAND_PWM: // pwm random led
+      pwm_fade();
 
     case MODE_MAX: // off
       PORTB = 0b00011111; // all LEDs off
